@@ -1,0 +1,115 @@
+﻿@page "/python"
+@using BlazorMonaco
+@using BlazorMonaco.Editor
+
+<style>
+    .editor-class {
+        height: 500px;
+    }
+</style>
+
+<h3>Python</h3>
+<div style="margin:10px 0;">
+    Error:::: @errortext
+
+</div>
+<div style="margin:10px 0;">
+    Return Text:::: @returnText
+
+</div>
+<div style="margin:10px 0;">
+    Return Number:::: @retunValue
+
+</div>
+<div style="margin:10px 0;">
+    <input type="text" @bind="@value" />
+
+</div>
+<div style="margin:10px 0;">
+    <button @onclick="GetValue">Run</button>
+</div>
+<StandaloneCodeEditor @ref="_editor" Id="my-editor-instance-python" CssClass="editor-class" ConstructionOptions="EditorConstructionOptions" />
+
+@code {
+    private StandaloneCodeEditor _editor = null!;
+    private string value = string.Empty;
+    private string returnText = string.Empty;
+    private string errortext = string.Empty;
+    private int retunValue = 0;
+    public class NumberClass
+    {
+        public int numberA { get; set; }
+        public int numberB { get; set; }
+    }
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            AutomaticLayout = true,
+            GlyphMargin = true,
+            Language = "python",
+            Value = @"
+class ReturnValues:
+<<<<<<< HEAD
+    def __init__(self):
+        self.ReturnText = """"
+        self.c = 0
+
+
+def greetings(name,listNumbers):
+    returnValues = ReturnValues()
+    returnValues.c = listNumbers.numberA + listNumbers.numberB
+    returnValues.ReturnText = f""Hello  {name.title()}""
+    return returnValues
+=======
+def __init__(self):
+    self.ReturnText = """"
+    self.c = 0
+
+
+def greetings(name,listNumbers):
+returnValues = ReturnValues()
+returnValues.c = listNumbers.numberA + listNumbers.numberB
+returnValues.ReturnText = f""Hello  {name.title()}""
+return returnValues
+>>>>>>> 5dac96abcbab1d1650f8fda28f28d9ae54d289dd
+"
+        };
+    }
+
+
+    private async Task GetValue()
+    {
+        if (value.Length == 0)
+        {
+            value = "test";
+        }
+
+        NumberClass numbers = new NumberClass
+        {
+            numberA = 4,
+            numberB = 59
+        };
+        var val = await _editor.GetValue();
+
+        var eng = IronPython.Hosting.Python.CreateEngine();
+        var scope = eng.CreateScope();
+        try
+        {
+            errortext = string.Empty;
+            eng.Execute(val, scope);
+            dynamic greetings = scope.GetVariable("greetings");
+            dynamic returnObject = greetings(value, numbers);
+            returnText = returnObject.ReturnText;
+            retunValue = returnObject.c;
+        }
+        catch (Exception ex)
+        {
+            errortext = ex.Message;
+
+        }
+
+    }
+
+
+}
